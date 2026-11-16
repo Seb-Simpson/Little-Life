@@ -1,4 +1,4 @@
-name: Life engine checks
+name: Life engine and browser checks
 on:
   pull_request:
   push:
@@ -13,11 +13,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+          cache: npm
+      - run: npm ci
       - run: npm run check
       - run: npm test
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
       - uses: actions/upload-artifact@v4
         with:
-          name: little-life-static
+          name: little-life-public-demo
           path: dist
+          include-hidden-files: true
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-failures
+          path: test-results
           retention-days: 7
