@@ -125,7 +125,7 @@ test('failed import attempt preserves last successful import and records error',
 test('credential fields, evidence claims and unknown schema versions are rejected',()=>{
   assert.throws(()=>parseImport(envelope([event()],{token:'private'})),/unsupported field/);
   assert.throws(()=>parseImport(envelope([event({verified:true})])),/unsupported field/);
-  assert.throws(()=>parseImport(envelope([event()],{schemaVersion:2})),/schemaVersion/);
+  assert.throws(()=>parseImport(envelope([event()],{schemaVersion:3})),/schemaVersion/);
 });
 test('unknown source names including prototype properties are rejected',()=>{
   for(const sourceId of ['constructor','__proto__','unknown','manual'])assert.throws(()=>parseImport(envelope([event()],{sourceId})));

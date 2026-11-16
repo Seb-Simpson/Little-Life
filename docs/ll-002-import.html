@@ -1,0 +1,43 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Little Life LL-002 · Coverage import format</title><link rel="stylesheet" href="./docs.css"></head><body>
+<nav><a href="../index.html#integrations">← Little Life wizard</a><a href="./ll-002-connection.html">Power Automate setup</a><a href="./import-format.html">Legacy record fields & recurrence</a></nav><h1>Version 2: scope before certainty</h1><p>Version 1 imports remain readable, with unknown coverage and unclassified legacy events. They cannot establish a free period. Saved v1 workspaces migrate to v2 on load; no coverage is invented and existing records retain their identity. The local storage key stays unchanged so existing users retain their data on an approved origin.</p>
+<pre>{
+  "schemaVersion": 2,
+  "sourceId": "socs",
+  "exportedAt": "2026-11-16T10:00:00Z",
+  "lastSuccessfulSyncAt": "2026-11-16T09:55:00Z",
+  "coverage": [
+    {
+      "category": "lesson",
+      "start": "2026-11-16T00:00:00Z",
+      "end": "2026-11-23T00:00:00Z",
+      "observedAt": "2026-11-16T09:55:00Z",
+      "completeness": "partial"
+    },
+    {
+      "category": "activity",
+      "start": "2026-11-16T00:00:00Z",
+      "end": "2026-11-23T00:00:00Z",
+      "observedAt": "2026-11-16T09:55:00Z",
+      "completeness": "partial"
+    }
+  ],
+  "items": [
+    {
+      "externalId": "DEMO:calendar:lesson-1",
+      "type": "event",
+      "category": "lesson",
+      "title": "SYNTHETIC · Mathematics",
+      "start": "2026-11-16T11:00:00Z",
+      "end": "2026-11-16T12:00:00Z",
+      "status": "active",
+      "updatedAt": "2026-11-16T09:00:00Z"
+    }
+  ]
+}</pre>
+<p>Category is separate from type. An event is a lesson, activity, personal event or unclassified; assignments use assignment. A SOCS event is not automatically a lesson. The existing record fields, weekly/fortnightly recurrence, exception IDs and timestamp/cancellation rules remain as documented for v1. Unknown fields, credentials fields and unsupported schema versions reject the batch.</p>
+<h2>Coverage means a bounded upstream observation</h2><p>Each source supplies zero or more coverage windows, each with category, inclusive start, exclusive end, observedAt and completeness. All times need explicit offsets. Completeness is complete or partial; use partial until the query covers the entire intended scope, all pages, source changes and cancellations. Windows do not assert that events are independently verified. An explicit, fresh complete window with an empty items array can report an empty calendar only within that declared scope; an empty array without coverage says nothing.</p>
+<p>observedAt records when retrieval actually succeeded. It must not be after exportedAt. Re-reading, importing or repackaging a file does not advance its observation. Source freshness defaults: SOCS lessons/activities 720 minutes, Outlook personal events 360 minutes, Teams assignments 1440 minutes. Requirements and thresholds are source-specific, versioned state. The app compares each window’s observation independently; a fresh window cannot freshen another stale window. Fresh complete adjacent windows may join; gaps are never bridged.</p>
+<p>Coverage from a strictly older export cannot overwrite newer coverage. Different coverage at the same exportedAt conflicts and rejects the whole batch. A newer export with no coverage resets that source’s coverage to unknown. Record changes still merge by stable source/ID and updatedAt. Same-time record conflicts reject the batch, stale changes are ignored and omissions never silently cancel entries.</p>
+<h2>Availability and briefing rules</h2><p>Free-time answers require fresh, complete coverage from every configured lesson/activity/personal source for the remaining 08:00–18:00 window, no failed source read/import, and complete event times/categories. Assignment coverage affects deadlines/briefings but assignments do not themselves occupy calendar time. All-day events occupy their declared date span; active overlaps are reported; cancelled/completed events do not block gaps. Any shown gap remains inferred from exporter-reported coverage, never confirmed free time.</p>
+<p>Current activity and next recorded event use the actual clock, independent of the date being browsed. A next lesson is selected only from lesson events, with a 14-day lookahead and an uncertainty warning where coverage cannot establish that it is the earliest. Daily briefings are deterministic: today, next lesson, inferred/unknown free periods, assignments due in seven days (including overdue work) and missing information. Supporting record IDs are returned by the pure engine. No remote AI request occurs.</p>
+<p>Limits: 2 MB per file/text, 3,000 records per import, 100 coverage windows per source, and 10,000 stored records. School browser quota may be lower. Private backups use workspace schema 2 and remain private files. Legacy backup migration does not establish coverage.</p><footer>Exporter claims are labelled as reported, not verified. Partial and missing information stay visible.</footer></body></html>

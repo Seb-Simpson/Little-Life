@@ -1,56 +1,81 @@
-# Little Life — LL-001
+# Little Life — LL-002
 
-A local-first life-data engine and browser prototype: today’s timeline, tomorrow’s schedule, assignments, current/next activity, inferred free time, journal/goals, integration status, manual entry and structured JSON import.
+A static, local-first life companion prototype continued from PR #1 / `fd89950`. No live school integration is verified. All checked-in examples and browser fixtures are synthetic.
 
-**School integrations are not connected or verified.** The app starts in a clearly labelled demonstration workspace with a fixed 11:05 preview clock. “Use my data” opens a separate empty personal workspace. Sebastian’s existing SOCS/Teams Power Automate retrieval is user reported; this repository does not claim to have tested it.
+## What changed
 
-## Open the browser app
+- Source/category coverage windows and source-specific freshness: missing, partial, stale or failed data suppresses free-time answers. Reading an old file never renews its upstream observation.
+- Lessons, activities, personal events and assignments are distinct. Timelines detect overlaps and cancellations; current/next activity is anchored to the current clock, independently of the date being browsed.
+- A deterministic daily briefing answers today, next lesson, next possible free period, due-soon assignments and missing information from the life engine, with supporting record IDs and uncertainty.
+- A connection wizard links private JSON exports from the existing SOCS/Teams Power Automate flows through the OneDrive folder Sebastian confirmed already syncs to his laptop. Native read-only handles are remembered; one-click refresh and optional minute-by-minute refresh while visible avoid repeated importing.
+- Personal data is blocked on shared/public deployments. Public builds accept built-in synthetic data only; private production requires an explicit dedicated HTTPS origin. A path or key prefix is not privacy isolation.
+- Node tests plus actual Chromium browser tests cover reload, persistence, manual entry, imports/replay, backup/restore, navigation, keyboard interaction, responsive layout, linked handles and privacy gates.
 
-Serve the repository with any static web host. Browser users install nothing and need no account. All application URLs are relative, including when hosted under a GitHub Pages repository path. ES modules require HTTP(S); double-clicking `index.html` using a file URL is not supported.
+## Open in a browser
 
-For development, use Node 22 or newer; there are no npm dependencies to install:
+Browser users install nothing. The default production build is a public demonstration and accepts no typed/imported personal data. Runtime code has no external dependencies, account login, telemetry or remote AI request. The application CSP blocks fetch/XHR with `connect-src 'none'`.
+
+For development (Node 22+, no runtime dependencies):
 
 ```sh
+npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173`. `PORT` can change the development port. The local development server is for trusted development networks only. On the managed Cloud workspace, use its supported preview URL.
+Open `http://localhost:5173/`. Use **Use my data** only on this trusted development origin or an approved dedicated private deployment. School export/storage policy still applies. File URLs are unsupported; ES modules require HTTP(S). Do not run untrusted apps on the same origin/port.
 
-## Try the prototype
+## Connection setup
 
-1. Explore the demo. Its timeline includes a cancellation, recurring practice, assignments and a missing deadline. The preview clock and every sample record are labelled.
-2. Select **Use my data** for the empty personal workspace.
-3. **Add entry** creates events (including weekly repeats), assignments, tasks, reminders, goals or journal entries. Edit your manual entries to update or cancel them. Tasks/goals can be completed and reopened. Reminders appear in the dashboard; no background/device notifications are implemented.
-4. **Your data** accepts a documented JSON file/paste. Preview validates the entire batch before import. Re-importing unchanged IDs is idempotent. Use a source’s real application to edit imported entries, then import the newer record.
-5. **Integrations** distinguishes the local import time from an unverified upstream sync time. No connection becomes verified through a file import.
-6. Download a local backup and test restoring it in the same workspace. Browser storage can be cleared by device policy; do not use it as the only copy.
+Use **Integrations → Connection wizard** and the [beginner setup guide](docs/ll-002-connection.html). It explains the exact Select/Compose/Create-file/Update-file sequence, stable IDs, class/assignment fields, coverage and cancellations. Actual SOCS dynamic-content field names depend on the existing flow and must be checked against its authorised output; none were guessed or tested here.
 
-The checked-in `examples/*.demo.json` files are synthetic format examples, not live integrations. They are deliberately titled DEMO. For real import, replace all sample content with permitted data. The built-in “Download sample JSON” creates a date-current synthetic example; it still establishes no connection.
+Recommended chain: existing approved flow → private `Little Life/socs.json` / `teams.json` in school OneDrive → existing OneDrive sync → user-selected browser file handles. No new Microsoft app registration, public link, premium HTTP action or folder scanning is implemented. OneDrive for Business is a standard connector, but licence, DLP, export entitlement and managed browser permission must be confirmed. This route is conditionally feasible without new paid services or tenant-admin permissions, not a guarantee of school approval.
 
-## Documentation
+On the approved origin, link each file once. A refresh rereads its data; an optional timer checks every minute while visible. Browser permission may need reconnecting after a reload, and OneDrive replacement can require relinking. Closing/hiding the app stops reads. Normal JSON file/paste import remains available as a fallback. The native picker is available in supported Edge/Chrome browsers; do not bypass policy if blocked.
 
-- [Integration feasibility and safe connection guide](docs/integrations.html): each source, permissions, restrictions, automatic-sync feasibility, verification status and actions for Sebastian.
-- [Import contract and Power Automate mapping](docs/import-format.html): IDs, time zones, recurrence, cancellation, merge rules and limits.
-- [Architecture and persistence boundaries](docs/architecture.md).
-- [Recommended LL-002 plan](docs/ll-002.md).
-- [Verification record](docs/verification.md).
+## Data confidence
 
-## Checks
+[Import v2](docs/ll-002-import.html) adds event categories and bounded coverage: source, category, start/end, observedAt and complete/partial. Defaults require SOCS lessons/activities (12h freshness), Outlook personal events (6h) and Teams assignments (24h). The wizard allows explicitly declaring that all personal events are managed manually; it cannot remove academic coverage requirements. Version 1 imports/backups migrate without inventing coverage or categories.
+
+A fresh complete empty export reports no entries only within its declared scope. Missing data is never confirmed free time. Any gap remains inferred from exporter-reported coverage. A next event is labelled recorded and may have earlier missing commitments. Imported claims cannot independently verify a connection.
+
+## Checks and browser tests
 
 ```sh
 npm run check
 npm test
 npm run build
+npx playwright install --with-deps chromium
+npm run test:browser
 ```
 
-The dependency-free Node suite covers scheduling, DST, recurrence/exceptions, persistence/recovery, replay deduplication, stale updates/cancellations and missing data. The build produces `dist/`. CI runs checks, tests and the build on PRs; it does not deploy or merge.
+For an existing compatible Chromium on Linux:
 
-## GitHub Pages after review
+```sh
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/usr/bin/chromium npm run test:browser
+```
 
-This is a buildless static app. After approving/merging the PR, Sebastian may enable repository **Settings → Pages → Deploy from a branch → main / (root)**, if school/GitHub policy permits it. The resulting route is `https://seb-simpson.github.io/Little-Life/`. No Pages configuration was changed or deployment verified in LL-001. Alternatively, publish only `dist/` through an approved Pages workflow. The checked-in CI only prepares a static artifact.
+The Playwright runner owns its test server; no preview relay is needed. Tests use synthetic files and native origin-private file handles with only file selection/permission outcomes simulated. They establish local browser processing, not Windows OneDrive synchronisation, the OS file picker or school permission. CI runs checks, unit tests, public build and Chromium tests before uploading `dist/`. See the [verification record](docs/verification.md).
 
-Keep the public repository and Pages assets limited to synthetic examples and source code. Never commit school JSON, journals, credentials, flow definitions or private ICS/feed URLs. Local import does not write a repository file. Ignored folders `private-data/`, `imports/`, `backups/` and `*.local.json` reduce accidental commits but do not replace review. There is no `.env` or secret needed for LL-001.
+## Deployment and privacy
 
-Storage is unencrypted, browser/origin-local and separate for demo/personal data. GitHub project Pages under the same account share an origin; scripts on another project at that origin can access browser storage. Use an approved dedicated origin before storing sensitive data. Backups remain private user downloads. No remote AI, analytics or data API is called; application fetch/XHR connections are blocked by CSP. External documentation links are opened only by the user.
+`npm run build` produces `dist/` with relative URLs, `.nojekyll` and an enforced synthetic-only policy, including when served on localhost. Deploy only `dist/` for public use. **Settings → Pages → Source: GitHub Actions**, then the manual **Publish synthetic demo to Pages** workflow after review/approval. It reruns tests and builds before publishing. No Pages setting was changed or workflow dispatched for LL-002. The app is tested under `/Little-Life/` for project-path compatibility.
 
-Lively Wallpaper, an animated house, companion memories and AI conversation are future work. The pure engine modules allow additional renderers without changing the authoritative data model. Lively’s storage and runtime have not been tested.
+Never deploy raw development source as the private release. An approved operator may create a private build for a reviewed dedicated origin:
+
+```sh
+npm run build -- --private-origin https://YOUR-APPROVED-DEDICATED-HOSTNAME
+```
+
+Only that exact HTTPS origin at `/` accepts personal data. All `github.io` origins, unconfigured hosts and subpaths are blocked. Host only trusted Little Life code there; no unrelated apps/service workers may share its origin. Domain/host provision is a separate school-approved step and is not assumed free or permission-free. School laptop rules still apply. Public deployment uses only synthetic data, even if a previous browser preference selected personal mode; it does not load the legacy personal workspace. Any legacy personal data already stored on an old shared origin must be removed through the browser’s approved site-data controls after an approved recovery/backup.
+
+Local storage is unencrypted and not a backup. Private downloads and file handles stay on the trusted browser/origin; browser clearing, policy or device loss may remove them. Never commit real exports, journals, flow definitions, school URLs or credentials. Ignored folders are only an additional guard, not sanitisation. No school data was used in this implementation.
+
+## Documentation and next steps
+
+- [Practical setup, permissions, OneDrive feasibility and troubleshooting](docs/ll-002-connection.html).
+- [Version 2 coverage/import contract](docs/ll-002-import.html).
+- [Architecture](docs/architecture.md) and [verification evidence](docs/verification.md).
+- [LL-003 recommendation](docs/ll-003.md).
+- [LL-001 source-by-source feasibility reference](docs/integrations.html).
+
+Animated house, persistent companion memories, remote AI conversations and Lively are still future work. LL-002 introduces deterministic briefing and trusted-data boundaries first.

@@ -20,12 +20,13 @@
       <a href="#overview" data-view="overview"><span aria-hidden="true">☀</span> My day</a>
       <a href="#tomorrow" data-view="tomorrow"><span aria-hidden="true">▦</span> Tomorrow</a>
       <a href="#tasks" data-view="tasks"><span aria-hidden="true">☑</span> Tasks & assignments</a>
+      <a href="#briefing" data-view="briefing"><span aria-hidden="true">◇</span> Daily briefing</a>
       <a href="#journal" data-view="journal"><span aria-hidden="true">▤</span> Journal & goals</a>
       <span class="nav-divider"></span>
       <a href="#integrations" data-view="integrations"><span aria-hidden="true">⊞</span> Integrations</a>
       <a href="#data" data-view="data"><span aria-hidden="true">⇅</span> Your data</a>
     </nav>
-    <div class="sidebar-bottom"><span class="local-dot"></span> Browser-local storage<p>Your little life stays on this device.</p><span class="version">LIFE ENGINE · LL–001</span></div>
+    <div class="sidebar-bottom"><span class="local-dot"></span> Browser-local storage<p>Your little life stays on this device.</p><span class="version">LIFE ENGINE · LL–002</span></div>
   </aside>
   <div class="shell">
     <header class="topbar"><span id="breadcrumb">Your space / My day</span><div><span class="zone">Europe/London</span><span class="avatar" aria-label="Personal workspace">S</span></div></header>
@@ -40,7 +41,7 @@
       <input type="hidden" name="id">
       <label>Type<select name="type"><option value="event">Event</option><option value="assignment">Assignment</option><option value="task">Task</option><option value="reminder">Reminder</option><option value="goal">Personal goal</option><option value="journal">Journal entry</option></select></label>
       <label>Title<input name="title" required maxlength="300" placeholder="What’s on your mind?"></label>
-      <div id="event-fields"><div class="form-row"><label>Date<input type="date" name="eventDate"></label><label>Starts<input type="time" name="startTime"></label><label>Ends<input type="time" name="endTime"></label></div><label>Location <span class="optional">optional</span><input name="location" maxlength="300"></label><label class="check-label"><input type="checkbox" name="repeat"> Repeat weekly on this weekday</label><label id="repeat-until" hidden>Repeat until<input type="date" name="until"></label></div>
+      <div id="event-fields"><label>Event category<select name="category"><option value="personal">Personal event</option><option value="lesson">Academic lesson</option><option value="activity">Activity</option><option value="unclassified">Not yet classified</option></select></label><div class="form-row"><label>Date<input type="date" name="eventDate"></label><label>Starts<input type="time" name="startTime"></label><label>Ends<input type="time" name="endTime"></label></div><label>Location <span class="optional">optional</span><input name="location" maxlength="300"></label><label class="check-label"><input type="checkbox" name="repeat"> Repeat weekly on this weekday</label><label id="repeat-until" hidden>Repeat until<input type="date" name="until"></label></div>
       <div id="due-fields" class="form-row" hidden><label>Due date <span class="optional">optional</span><input type="date" name="dueDate"></label><label>Due time<input type="time" name="dueTime" value="17:00"></label></div>
       <label id="journal-date" hidden>Journal date<input type="date" name="journalDate"></label>
       <label>Notes <span class="optional">optional</span><textarea name="notes" rows="3" maxlength="10000" placeholder="Anything you’d like to remember…"></textarea></label>
