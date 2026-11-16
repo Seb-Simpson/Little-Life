@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "teams",
+  "exportedAt": "2026-11-16T07:30:00Z",
+  "items": [
+    {"externalId":"sample-class:assignment-001","type":"assignment","title":"DEMO · Mechanics problem set","due":"2026-11-19T16:00:00Z","notes":"Synthetic data only; no Teams connection.","updatedAt":"2026-11-16T07:00:00Z"},
+    {"externalId":"sample-class:assignment-002","type":"assignment","title":"DEMO · Research outline","due":null,"notes":"Due date deliberately unavailable.","updatedAt":"2026-11-16T07:00:00Z"}
+  ]
+}

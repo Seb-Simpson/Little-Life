@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "socs",
+  "exportedAt": "2026-11-16T07:30:00Z",
+  "lastSuccessfulSyncAt": "2026-11-16T07:25:00Z",
+  "items": [
+    {"externalId":"sample-calendar:lesson-001","type":"event","title":"DEMO · Mathematics","start":"2026-11-16T09:00:00Z","end":"2026-11-16T10:00:00Z","timeZone":"Europe/London","updatedAt":"2026-11-16T07:00:00Z"},
+    {"externalId":"sample-calendar:club-001","type":"event","title":"DEMO · Photography club (cancelled)","start":"2026-11-16T16:00:00Z","end":"2026-11-16T17:00:00Z","status":"cancelled","updatedAt":"2026-11-16T07:00:00Z"},
+    {"externalId":"sample-calendar:unknown-time","type":"event","title":"DEMO · Fixture time unavailable","date":"2026-11-17","notes":"Missing times deliberately retained for testing.","updatedAt":"2026-11-16T07:00:00Z"}
+  ]
+}
