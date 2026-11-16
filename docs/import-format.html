@@ -1,0 +1,57 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Little Life · JSON import contract</title><link rel="stylesheet" href="./docs.css"></head><body>
+<nav><a href="../index.html#data">← Little Life</a><a href="./integrations.html">Integration & connection guide</a><a href="../examples/socs.demo.json">Synthetic SOCS example</a><a href="../examples/teams.demo.json">Synthetic Teams example</a></nav>
+<h1>A small, predictable import format</h1><p class="meta">Version 1 · JSON only · all examples are synthetic</p>
+<div class="callout">Import only permitted data. Do not upload full Power Automate definitions, passwords, access/refresh tokens, private calendar feed URLs, email bodies or attachments. Unknown fields are rejected. Text fields cannot detect a secret pasted into a title or note; review your export first.</div>
+<h2>Envelope</h2><pre>{
+  "schemaVersion": 1,
+  "sourceId": "socs",
+  "exportedAt": "2026-11-16T07:30:00Z",
+  "lastSuccessfulSyncAt": "2026-11-16T07:25:00Z",
+  "items": [{
+    "externalId": "calendar-main:event-001",
+    "type": "event",
+    "title": "Sample mathematics lesson",
+    "start": "2026-11-16T09:00:00Z",
+    "end": "2026-11-16T10:00:00Z",
+    "timeZone": "Europe/London",
+    "status": "active",
+    "updatedAt": "2026-11-16T07:00:00Z"
+  }]
+}</pre>
+<p>Required envelope fields: <code>schemaVersion</code>, <code>sourceId</code>, <code>exportedAt</code>, <code>items</code>. Optional <code>lastSuccessfulSyncAt</code> is the upstream retrieval time reported by the exporter, never proof of a verified connection. Accepted source IDs: <code>outlook</code>, <code>socs</code>, <code>teams</code>, <code>email</code>, <code>power-automate</code>. Use the origin, such as <code>socs</code>, when Power Automate is just the transport. Manual entries use the form.</p>
+<h2>Record fields</h2><div class="table-wrap"><table><thead><tr><th>Field</th><th>Contract</th></tr></thead><tbody>
+<tr><td><code>externalId</code></td><td>Required stable upstream ID, up to 300 characters. Scope it by calendar, class or mailbox if needed. Do not use titles, array positions or the export time as IDs. Identity is the pair [sourceId, externalId].</td></tr>
+<tr><td><code>type</code> / <code>title</code> / <code>updatedAt</code></td><td>Required. Type: event, assignment, task, reminder, goal or journal. Non-empty title up to 300 characters. updatedAt is the actual source modification/revision timestamp, as an instant. If unavailable, use a stable first-seen time retained by the exporter, updating it only when the record’s content actually changes. Do not stamp every unchanged row with the current run time.</td></tr>
+<tr><td><code>start</code> / <code>end</code></td><td>Timed events only. ISO timestamps with Z or an explicit offset. End must be later than start. Null/omitted times remain unavailable; an event without a start prevents free-time inference for its date (or every day when its date is also unknown). Unknown end blocks the rest of the window; a known future start still appears as the next event. No duration is guessed.</td></tr>
+<tr><td><code>startDate</code> / <code>endDate</code></td><td>All-day events only: YYYY-MM-DD with exclusive endDate, e.g. 16–17 November means one day. Cannot coexist with start/end. Interpreted in timeZone.</td></tr>
+<tr><td><code>due</code> / <code>date</code></td><td>due: optional explicit-offset instant for an assignment, task or reminder. Missing due remains unavailable. date: optional YYYY-MM-DD for a journal entry or an event whose time is unavailable. Do not infer school deadlines from export dates.</td></tr>
+<tr><td><code>timeZone</code></td><td>IANA zone; defaults to Europe/London. Graph can return Windows zone names: request UTC or map to a correct IANA zone before export. Do not append Z to an unconverted local time.</td></tr>
+<tr><td><code>status</code></td><td>active (default), completed or cancelled. Preserve cancellations as records with the same ID and newer updatedAt. Missing rows never imply cancellation. An assignment’s publication state does not prove Sebastian completed it; only map completion when supported by his actual submission state.</td></tr>
+<tr><td><code>notes</code> / <code>location</code></td><td>Optional plain text, 10,000 / 300 characters. Rendered as text. Avoid sensitive personal details and arbitrary source payloads.</td></tr>
+<tr><td><code>recurrence</code></td><td>Optional weekly/fortnightly rule for a same-day timed event aligned to whole minutes; see below. Unsupported rules are rejected. Prefer expanded Graph calendarView occurrences or exporter-expanded instances for complex calendars.</td></tr>
+<tr><td><code>seriesExternalId</code> / <code>originalStart</code></td><td>Optional event exception pair. seriesExternalId identifies a recurring parent in the same source; originalStart is the original occurrence’s exact instant. The exception has its own stable externalId. Include the parent first or in the same batch. Use one exception per original occurrence.</td></tr>
+</tbody></table></div>
+<h2>Recurring schedules, changes and cancellations</h2>
+<pre>"recurrence": {
+  "frequency": "weekly",
+  "weekdays": [1, 3],
+  "intervalWeeks": 1,
+  "until": "2027-03-26",
+  "excludeDates": ["2026-12-21", "2026-12-23"]
+}</pre>
+<p>Weekdays are Sunday 0 through Saturday 6. intervalWeeks is 1 or 2 and weeks anchor to Monday in the week of the first start. until is inclusive and mandatory, no more than 730 days after the first start. No occurrence precedes the initial start date. Local wall time stays stable across daylight saving. An ambiguous or nonexistent recurrence time produces a missing-time warning instead of guessing; export an explicit occurrence/exception for that date.</p>
+<p>Move one occurrence with an exception carrying a new start/end and originalStart. Cancel one with status cancelled and its originalStart; cancel the whole series by updating the parent to cancelled. Excluded dates suppress instances. When using expanded occurrences, keep a stable ID based on the source series/instance identifier plus its original scheduled start, including after a move. Do not import a recurrence master alongside a second set of expanded occurrences for the same series.</p>
+<h2>Power Automate mapping</h2>
+<ol>
+<li>In a copy of the approved flow, retain existing retrieval. Finish all pagination before generating the export. Select a bounded date range and document what was fetched. Keep school data within approved connectors and destinations.</li>
+<li>Use a Select action to produce only the fields above. Compose the envelope with schemaVersion 1, the real sourceId, the actual export time and (if known) the successful upstream retrieval time. The file must contain a JSON object, not a quoted/escaped JSON string.</li>
+<li>SOCS event: map the stable calendar/UID identity, summary, actual DTSTART/DTEND, STATUS and source last-modified value where available. Convert ICS and recurrence in the exporter; LL-001 has no ICS parser.</li>
+<li>Teams assignment: externalId = classId + ':' + assignmentId; type = assignment; title = displayName; due = dueDateTime or null; updatedAt = lastModifiedDateTime. Keep grades, attachments and roster details out. If an assignment state is not equivalent to completion, leave active. Record cancellation only if confirmed by the source.</li>
+<li>Outlook: prefer immutable source IDs or stable iCalendar instance identities. Use an expanded calendar view so recurring exceptions are represented. Namespace IDs by calendar. Preserve source modification times and explicit cancellations; a rolling window omitting an event must not remove it.</li>
+<li>Email: use a stable immutable message ID and title. Map a reminder due time only after Sebastian checks it; received time is not a deadline. No automatic natural-language deadline extraction is implemented.</li>
+<li>Save JSON as a private file using an already licensed, school-approved route. Check the actual connector licence before adding an action. Download via the normal school interface, then preview/import locally. Export a narrow sample before scaling up.</li>
+</ol>
+<h2>Merge rules and evidence</h2><p>The whole batch is validated before saving. A repeated source + externalId with the same timestamp and content is unchanged. A newer timestamp updates the existing record; an older one is ignored. Same-time conflicting content rejects the entire batch. Exact duplicate rows collapse. Different sources remain separate; identical titles/times across sources are flagged for review in Your data. This avoids erasing distinct commitments. Use one authoritative route per upstream calendar to avoid mirrors.</p>
+<p>Imported records are labelled imported/unverified. Manual entries are labelled you entered; demo records stay in a separate workspace. Neither an import nor an upstream timestamp changes a connection to verified. Entries with missing information remain visible, and free periods are always inferred.</p>
+<h2>Limits and backups</h2><p>Files/text: max 2 MB and 3,000 records per batch; max 10,000 saved records. Browser quota may be lower. Backups contain the entire versioned workspace, not this import envelope, and restore only into the same mode after confirmation. Keep the workspace small enough for a 2 MB backup to restore. Clearing browser data deletes local persistence. Changes in other tabs use revision checks and the Web Locks API when available; older browsers without locks have a small simultaneous-write race. Use a single editing tab there.</p>
+<footer>Little Life LL-001 · No account authentication or automatic retrieval is implemented.</footer></body></html>
